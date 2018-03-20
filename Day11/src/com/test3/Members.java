@@ -78,25 +78,8 @@ class Hero extends Tank{
 	
 	//shoot
 	public void shotEnemy(){
-		Shot s = null;
-		switch(this.direct){
-		case 0 :
-			s = new Shot(x + 15, y, 0);
-			ss.add(s);
-			break;
-		case 1 :
-			s = new Shot(x + 30, y + 15, 1);
-			ss.add(s);
-			break;
-		case 2 :
-			s = new Shot(x + 15, y + 30, 2);
-			ss.add(s);
-			break;
-		case 3 :
-			s = new Shot(x, y + 15, 3);
-			ss.add(s);			
-		}
-		
+		Shot s = new Shot(this.x, this.y, this.direct);
+		ss.add(s);
 		Thread t = new Thread(s);
 		t.start();
 	}
@@ -116,10 +99,97 @@ class Hero extends Tank{
 }
 
 //enemy tank
-class EnemyTank extends Tank{
+class EnemyTank extends Tank implements Runnable{
 	
+	boolean isLive = true;
+	Vector<Shot> ss = new Vector<>();
+	int cd = 2;
 	public EnemyTank(int x, int y){
 		super(x, y);
+	}
+	
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		while(true){
+			cd--;
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			for(int i = 0; i < ss.size(); i++){
+				Shot s = ss.get(i);
+				if(s.isLive == false){
+					ss.remove(s);
+				}
+			}
+			if(ss.size() < 5 && cd < 0){
+				Shot s = new Shot(this.x, this.y, this.direct);
+				ss.add(s);
+				Thread t = new Thread(s);
+				t.start();
+				cd = 2;
+			}
+			
+			switch(this.direct){
+			case 0 :
+				for(int i = 0; i < 30; i++){
+					if(y > 0) y -= speed;
+					else break;
+					try {
+						Thread.sleep(50);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				break;
+			case 1 : 
+				for(int i = 0; i < 30; i++){
+					if(x < 370) x += speed;
+					else break;
+					try {
+						Thread.sleep(50);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				break;
+			case 2 :
+				for(int i = 0; i < 30; i++){
+					if(y < 270) y += speed;
+					else break;
+					try {
+						Thread.sleep(50);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				break;
+			case 3 :
+				for(int i = 0; i < 30; i++){
+					if(x > 0) x -= speed;
+					else break;
+					try {
+						Thread.sleep(50);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				break;
+			}
+			
+			this.direct = (int)(Math.random() * 4);
+			if(this.isLive == false){
+				break;
+			}
+		}
 	}
 }
 
@@ -132,9 +202,27 @@ class Shot implements Runnable{
 	int speed = 2;
 	boolean isLive = true;
 	public Shot(int x, int y, int direct){
-		this.x = x;
-		this.y = y;
 		this.direct = direct;
+		switch(direct){
+		case 0 :
+			this.x = x + 15;
+			this.y = y;
+			break;
+		case 1 :
+			this.x = x + 30;
+			this.y = y + 15;
+			break;
+		case 2 :
+			this.x = x + 15;
+			this.y = y + 30;
+			break;
+		case 3 :
+			this.x = x;
+			this.y = y + 15;
+			break;
+		}
+		
+		
 	}
 	@Override
 	public void run() {
@@ -159,8 +247,6 @@ class Shot implements Runnable{
 				x -= speed;
 				break;
 			}
-			
-			System.out.println(x + "," + y);
 			//when should the bullet die?
 			
 			//judge whether the bullet reaches the panel edge
@@ -169,5 +255,21 @@ class Shot implements Runnable{
 				break;
 			}
 		}
+	}
+}
+
+class Bomb{
+	int x;
+	int y;
+	
+	int life = 40;
+	boolean isLive = true;
+	public Bomb(int x, int y){
+		this.x = x;
+		this.y = y;
+	}
+	public void lifeDown(){
+		if(life > 0) life--;
+		else this.isLive = false;
 	}
 }

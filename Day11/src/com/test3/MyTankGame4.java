@@ -1,6 +1,9 @@
 /**
- * function : tank game 1.0
+ * function : tank game 2.0
  * draw a tank
+ * my tank can move
+ * my tank can shoot
+ * 
  */
 
 package com.test3;
@@ -35,7 +38,11 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 	//define a mytank
 	Hero hero = null;
 	Vector<EnemyTank> ets = new Vector<>();
+	Vector<Bomb> bombs = new Vector<>();
 	int enSize = 3;
+	
+	//define image;
+	Image image = null;
 	
 	//constructor
 	public MyPanel(){
@@ -43,11 +50,21 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 		hero = new Hero(100, 100);
 		
 		for(int i = 0; i < enSize; i++){
-			EnemyTank et = new EnemyTank((i+1)*50, 0);
+			EnemyTank et = new EnemyTank((i+1)*60, 0);
 			et.setColor(0);
 			et.setDirect(2);
-			ets.addElement(et);
+			Thread t = new Thread(et);
+			t.start();
+			Shot s = new Shot(et.x, et.y, 2);
+			
+			et.ss.add(s);
+			Thread t2 = new Thread(s);
+			t2.start();
+			ets.add(et);
 		}
+		
+		//initialize image
+		image = Toolkit.getDefaultToolkit().getImage(Panel.class.getResource("/bomb.gif"));
 	}
 	// override paint
 	public void paint(Graphics g){
@@ -69,7 +86,39 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 		}
 		
 		for(int i = 0; i < ets.size(); i++){
-			this.drawTank(ets.get(i).getX(), ets.get(i).getY(), g, ets.get(i).getDirect(), 0);
+			EnemyTank et = ets.get(i);
+			if(et.isLive){
+				this.drawTank(et.getX(), et.getY(), g, et.getDirect(), 0);
+				for(int j = 0; j <et.ss.size(); j++){
+					Shot s = et.ss.get(j);
+					if(s.isLive){
+						g.draw3DRect(s.x, s.y, 1, 1, false);
+					}
+				}
+			}
+		}
+		
+		for(int i = 0; i < bombs.size(); i++){
+			Bomb b = bombs.get(i);
+			if(b.life > 0)
+				g.drawImage(image, b.x, b.y, 30, 30, this);
+			b.lifeDown();
+			if(b.life == 0){
+				bombs.remove(b);
+			}
+		}
+	}
+	//judge whether hit the enemy
+	public void hitTank(Shot s, EnemyTank et){
+		
+		if(s.x > et.x && s.x < et.x+30 && s.y > et.y && s.y < et.y + 30){
+			//bullet dies
+			s.isLive = false;
+			//enemy tank dies
+			et.isLive = false;
+			//creat a bomb. add it to the vector 
+			Bomb b = new Bomb(et.x, et.y);
+			bombs.add(b);
 		}
 	}
 	
@@ -174,6 +223,21 @@ class MyPanel extends JPanel implements KeyListener,Runnable{
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+			//
+			for(int i = 0; i < hero.ss.size(); i++){
+				Shot s = hero.ss.get(i);
+				if(s.isLive){
+					for(int j = 0; j < ets.size(); j++){
+						EnemyTank et = ets.get(j);
+						if(et.isLive){
+							this.hitTank(s, et);
+						}
+					}
+				}
+			}
+			
+			
+			//repaint
 			this.repaint();
 		}
 	}
